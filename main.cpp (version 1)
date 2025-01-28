@@ -1,0 +1,112 @@
+// version 1
+/*
+this version was uploaded on 1/28/25
+this version contains the basic drawing functions that are used in the program. 
+It has a few problems:
+
+1) no find square function: this function will be implemented within the next commit
+
+2) points between points: currently the shape on the screen is not the same as the exact input the user uses, this is because if I just drew a pixel on the exact
+pixel the user draws it would skip around a bunch and have gaps everywhere, to handle this I have made it draw lines between the points but these new points in between
+are not inside the points array and would not be considered by the program as points that could be used for a square and in order to find the largest one they need to be.
+
+3) (maybe) After adding the features above if the program runs slow I plan to shrink the possible drawing area in order to make time to run quicker, 
+or find a way to better optimize the functions I already have
+
+*/
+
+#include <iostream>
+#include "graph1.h"
+#include <vector>
+using namespace std;
+struct point {
+	int x;
+	int y;
+};
+struct square {
+	point* points = new point[4]; 
+};
+
+
+void drawPoints(vector<point> vectorOfPoints, int size);
+void drawInstructionText(int size);
+void drawSquare();
+bool canPointBeUsed(int x, int y);
+square findRandomSquare(vector<point> pointlist);
+
+
+int main() {
+	displayGraphics();
+	
+	// var decleration
+	int mouse_X, mouse_Y,points_Array_Size= 0,last_Points_Array_size = 0;
+	vector<point> points;
+	bool has_mouse_Dragged = false;
+
+	drawInstructionText(points_Array_Size);	// draws the inscructions on the top of the screen for the first time, after this its only drawn when the screen is updated or 
+	while (true) 
+  {
+		points_Array_Size = points.size(); // called at the top of the loop once instead of every single time i need this info
+
+		if (mouseDragged(mouse_X, mouse_Y)) 
+    { //only runs if mouseDragged retruns true, and the mouse x and y values are changed by being passed by refrence 
+			if (canPointBeUsed(mouse_X, mouse_Y)) 
+      { // this if statement fixes a weird error with graph1.h that likes to throw in a -1,-1 input before everything when starting the program
+				has_mouse_Dragged = true; // lets the program know it needs to update the screen
+				points.push_back(point{ mouse_X,mouse_Y }); // adds a point wiht the x,y values
+			}
+			
+		}
+		//input handling
+		if (up()) 
+    { // reset input
+			points.clear(); // clears the vector of past points
+			clearGraphics(); // clears the screen
+			drawInstructionText(0); // reprints the text at the top of the screen so its not just a blank screen
+		}
+		
+		if (has_mouse_Dragged) 
+    { // if updated
+			clearGraphics(); // clears the graphics so the new updated version can be drawn
+			drawPoints(points, points_Array_Size); // draws the shape onto screen by taking the points given by the users mouse dragging and connecting them via lines
+			drawInstructionText(points_Array_Size);// reprints the text at the top of the screen so its not just a blank screen
+			has_mouse_Dragged = false; // resets so that if the user stops putting in any input, it doesnt redraw the screen over and over
+		}
+	}
+	return 0;
+}
+
+
+
+
+
+
+void drawPoints(vector<point> vectorOfPoints, int size) // only called if the mouse is currently being dragged;
+{
+	for (int i = 0; i < size; i++) 
+  { // links every point from 0 to size via a line with a width of 3
+		drawLine(vectorOfPoints[i].x, vectorOfPoints[i].y, vectorOfPoints[i + 1].x, vectorOfPoints[i + 1].y, 3);
+	}
+	drawLine(vectorOfPoints[0].x, vectorOfPoints[0].y, vectorOfPoints[size].x, vectorOfPoints[size].y, 3); // connects the first and last point together to make a closed shape
+}
+
+void drawInstructionText(int size)
+{
+	gout << setPos(10, 10) << "drag your mouse to draw a shape, press up on the keyboard to reset points" << endg;
+	gout << setPos(10, 25) << "then press right on the keyboard to find the biggest square that can be formed from the points" << endg;
+	gout << setPos(10, 40) << "sizeOfArray : " << size << endg;
+}
+
+bool canPointBeUsed(int x, int y)
+{
+	if (x < 0 || y < 0) 
+  {// if the x or y values are negative do not use them
+		return false;
+	}
+	return true;
+}
+
+square findRandomSquare(vector<point> pointlist) // todo
+{
+	return square();
+}
