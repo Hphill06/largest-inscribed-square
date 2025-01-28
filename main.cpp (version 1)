@@ -39,7 +39,7 @@ int main() {
 	displayGraphics();
 	
 	// var decleration
-	int mouse_X, mouse_Y,points_Array_Size= 0,last_Points_Array_size = 0;
+	int mouse_X, mouse_Y,points_Array_Size= 0;
 	vector<point> points;
 	bool has_mouse_Dragged = false;
 
