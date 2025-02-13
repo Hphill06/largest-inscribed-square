@@ -92,12 +92,12 @@ int main() {
 void drawPoints(vector<point> vectorOfPoints) // only called if the mouse is currently being dragged;
 {
 	int size = vectorOfPoints.size() - 1;
+	drawLine(vectorOfPoints[0].x, vectorOfPoints[0].y, vectorOfPoints[size].x, vectorOfPoints[size].y, 3); // connects the first and last point together to make a closed shape
+
 	for (int i = 0; i < size; i++) { // links every point from 0 to size via a line with a width of 3
 		drawLine(vectorOfPoints[i].x, vectorOfPoints[i].y, vectorOfPoints[i + 1].x, vectorOfPoints[i + 1].y, 3);
 		setColor(drawPoint(vectorOfPoints[i].x, vectorOfPoints[i].y), 255, 0, 0);// this part draws red dots over the top of the white line so i can see where the real points are in the vector
 	}
-	//after drawing connect
-	drawLine(vectorOfPoints[0].x, vectorOfPoints[0].y, vectorOfPoints[size].x, vectorOfPoints[size].y, 3); // connects the first and last point together to make a closed shape
 }
 
 void drawInstructionText(int size)
