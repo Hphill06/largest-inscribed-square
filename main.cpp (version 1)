@@ -1,21 +1,20 @@
-// version 2 
+// version 3
 /*
-this version was uploaded on 2/5/25
-this version is a stepping stone inbetween the last one and having a function that fills in the gaps between points
+this version was uploaded on 2/13/25
+added functionality so that the gaps between points are added to the array and will be consisedered for making squares when that feature is added
+
 todo:
 
 1) no find square function: this function will be implemented within the next commit
 
-2) points between points: currently the shape on the screen is not the same as the exact input the user uses, this is because if I just drew a pixel on the exact
-pixel the user draws it would skip around a bunch and have gaps everywhere, to handle this I have made it draw lines between the points but these new points in between
-are not inside the points array and would not be considered by the program as points that could be used for a square and in order to find the largest one they need to be.
-
-^ive found a way to solve this just need to implement it into my program but ive been swamped with other classes lately lol i will incriment the slope along 
-a line between two points and at each point add it to the array of total points 
-
-
 3) (maybe) After adding the features above if the program runs slow I plan to shrink the possible drawing area in order to make time to run quicker, 
 or find a way to better optimize the functions I already have
+
+*/
+/*
+to do:
+
+implement squares
 
 */
 
@@ -23,6 +22,7 @@ or find a way to better optimize the functions I already have
 #include "graph1.h"
 #include <vector>
 #include <random>
+
 using namespace std;
 struct point {
 	int x;
@@ -33,13 +33,18 @@ struct square {
 };
 
 
-void drawPoints(vector<point> vectorOfPoints, int size);
+void drawPoints(vector<point> vectorOfPoints);
 void drawInstructionText(int size);
 bool canPointBeUsed(int x, int y);
 square findRandomSquare(vector<point> pointlist);
 float DistanceBetweenTwoPoints(point point1, point point2);
-vector <point> addPoint(vector<point> pointList,int mouse_x, int mouse_y); // added this function to break it out of the main function since it will get complecated 
+void addPoint(vector<point> &pointList,int mouse_x, int mouse_y); // added this function to break it out of the main function since it will get complecated 
+void addFinalPoint(vector<point>& pointList);
 float slopeOfLine(point point1,point point2);
+void addMidpoints(vector<point>& pointList, point point1, point point2);
+point getMidPoint(point point1, point point2);
+int findPoint(const vector<point>& pointList, const point& target);
+void insertPoint(vector<point>& pointList, int index, point newPoint);
 
 int main() {
 	displayGraphics();
@@ -57,8 +62,7 @@ int main() {
 		if (mouseDragged(mouse_X, mouse_Y)) { //only runs if mouseDragged retruns true, and the mouse x and y values are changed by being passed by refrence 
 			if (canPointBeUsed(mouse_X, mouse_Y)) { // this if statement fixes a weird error with graph1.h that likes to throw in a -1,-1 input before everything when starting the program
 				has_mouse_Dragged = true; // lets the program know it needs to update the screen
-				points = addPoint(points, mouse_X, mouse_Y);
-				
+				addPoint(points, mouse_X, mouse_Y);
 			}
 			
 		}
@@ -71,12 +75,13 @@ int main() {
 
 		}
 		if (down()) {// outputs a random square on the shape
-			square square = findRandomSquare(points);
+			findRandomSquare(points);
+			NULL;
 		}
 		
 		if (has_mouse_Dragged) { // if updated
 			clearGraphics(); // clears the graphics so the new updated version can be drawn
-			drawPoints(points, points_Array_Size); // draws the shape onto screen by taking the points given by the users mouse dragging and connecting them via lines
+			drawPoints(points); // draws the shape onto screen by taking the points given by the users mouse dragging and connecting them via lines
 			drawInstructionText(points_Array_Size);// reprints the text at the top of the screen so its not just a blank screen
 			has_mouse_Dragged = false; // resets so that if the user stops putting in any input, it doesnt redraw the screen over and over
 		}
@@ -84,17 +89,15 @@ int main() {
 	return 0;
 }
 
-void drawPoints(vector<point> vectorOfPoints, int size) // only called if the mouse is currently being dragged;
+void drawPoints(vector<point> vectorOfPoints) // only called if the mouse is currently being dragged;
 {
-	
-	
+	int size = vectorOfPoints.size() - 1;
 	for (int i = 0; i < size; i++) { // links every point from 0 to size via a line with a width of 3
 		drawLine(vectorOfPoints[i].x, vectorOfPoints[i].y, vectorOfPoints[i + 1].x, vectorOfPoints[i + 1].y, 3);
 		setColor(drawPoint(vectorOfPoints[i].x, vectorOfPoints[i].y), 255, 0, 0);// this part draws red dots over the top of the white line so i can see where the real points are in the vector
 	}
+	//after drawing connect
 	drawLine(vectorOfPoints[0].x, vectorOfPoints[0].y, vectorOfPoints[size].x, vectorOfPoints[size].y, 3); // connects the first and last point together to make a closed shape
-	
-	
 }
 
 void drawInstructionText(int size)
@@ -112,35 +115,9 @@ bool canPointBeUsed(int x, int y)
 	return true;
 }
 
-square findRandomSquare(vector<point> pointlist) // todo
-{
-	for (int i = 0; i < pointlist.size(); i++) {
-		int randPoint = rand() % pointlist.size();
-		float distance = DistanceBetweenTwoPoints(pointlist[i], pointlist[randPoint]);
-		float slope = slopeOfLine(pointlist[i], pointlist[randPoint]);
-		//cout << "point number #" << i + 1 << " is " << distance << " away from point number #" << randPoint;
-		//cout << "   point number #" << i + 1 << "( " << pointlist[i].x << " , " << pointlist[i].y << " )  " << endl;
-		
-		cout <<"slope: " << slopeOfLine(pointlist[i], pointlist[randPoint]) << endl;
-	}
-	return square();
-}
-
 float DistanceBetweenTwoPoints(point point1, point point2)
 {
 	return sqrt(pow(point2.x-point1.x,2) + pow(point2.y-point1.y,2));
-}
-
-vector<point> addPoint(vector<point> pointList, int mouse_x, int mouse_y)
-{
-	// gets points inbetween the two points // to do
-	/*
-	to do this i will get the slope between each point, then incriment that slope onto a point and then do that until its met the other point 
-	and add each incrimented point to the points array
-	*/
-
-	pointList.push_back(point{ mouse_x,mouse_y });
-	return pointList;
 }
 
 float slopeOfLine(point point1, point point2)
@@ -148,6 +125,63 @@ float slopeOfLine(point point1, point point2)
 	float bottom = (point2.x - point1.x);
 	float top = (point2.y - point1.y);
 	if (bottom == 0) { return 0; }; // solves divide by zero error
-	return top/bottom;
+	return top / bottom;
 }
 
+point getMidPoint(point point1, point point2)
+{
+	return point{ ((point1.x + point2.x) / 2), ((point1.y + point2.y) / 2) };
+}
+
+void addPoint(vector<point> &pointList, int mouse_x, int mouse_y)
+{
+    pointList.push_back(point{mouse_x, mouse_y});
+    if (pointList.size() > 1) {
+        addMidpoints(pointList, pointList[pointList.size() - 2], pointList[pointList.size() - 1]);
+    }
+}
+
+void addFinalPoint(vector<point>& pointList)
+{
+	addMidpoints(pointList, pointList[0], pointList[pointList.size() - 1]);
+}
+
+void addMidpoints(vector<point>& pointList, point point1, point point2) {
+	float distance = DistanceBetweenTwoPoints(point1, point2);
+
+	if (distance < 2) // gets out of recursion
+		return;
+
+	point middle = getMidPoint(point1, point2);
+
+	int it = findPoint(pointList, point2);
+	cout << it << endl;
+	insertPoint(pointList,it,middle); // Insert before point2
+
+	// Recursively add midpoints
+	addMidpoints(pointList, point1, middle);// left side of 
+	addMidpoints(pointList, middle, point2);// 
+}
+
+void insertPoint(vector<point>& pointList, int index, point newPoint) {
+	if (index < 0 || index > pointList.size()) {
+		return;
+	}
+	pointList.insert(pointList.begin() + index, newPoint);
+}
+
+int findPoint(const vector<point>& pointList, const point& target) {
+	for (int i = 0; i < pointList.size(); i++) {
+		if ((pointList[i].x  == target.x ) && (pointList[i].y == target.y)) { 
+			return i;
+		}
+	}
+	return -1;
+}
+
+square findRandomSquare(vector<point> pointlist) // todo
+{
+	addFinalPoint(pointlist);
+	drawPoints(pointlist);
+	return square();
+}
