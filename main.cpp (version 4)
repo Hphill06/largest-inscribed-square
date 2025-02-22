@@ -1,14 +1,14 @@
-// version 3
+// version 4
 /*
-this version was uploaded on 2/13/25
-added functionality so that the gaps between points are added to the array and will be consisedered for making squares when that feature is added
+this version was uploaded on 2/21/25
+made some simple changes so that the program is more readable, need to figure out how i want to implement squares,
+im trying to decide if i should use lines in a new type of struct or just use the points array used throughout the program right now
 
 todo:
 
 1) no find square function: this function will be implemented within the next commit
 
-3) (maybe) After adding the features above if the program runs slow I plan to shrink the possible drawing area in order to make time to run quicker, 
-or find a way to better optimize the functions I already have
+
 
 */
 /*
