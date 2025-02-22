@@ -27,7 +27,15 @@ using namespace std;
 struct point {
 	int x;
 	int y;
+
+	bool operator==(const point& other) const {
+		if (other.x == this->x && other.y == this->y) {
+			return true;
+		}
+		return false;
+	}
 };
+
 struct square {
 	vector<point> points; // vector of 4 points that is a rectangle
 };
@@ -36,15 +44,16 @@ struct square {
 void drawPoints(vector<point> vectorOfPoints);
 void drawInstructionText(int size);
 bool canPointBeUsed(int x, int y);
-square findRandomSquare(vector<point> pointlist);
 float DistanceBetweenTwoPoints(point point1, point point2);
 void addPoint(vector<point> &pointList,int mouse_x, int mouse_y); // added this function to break it out of the main function since it will get complecated 
 void addFinalPoint(vector<point>& pointList);
 float slopeOfLine(point point1,point point2);
 void addMidpoints(vector<point>& pointList, point point1, point point2);
 point getMidPoint(point point1, point point2);
-int findPoint(const vector<point>& pointList, const point& target);
+int findPoint(vector<point> pointList, point target);
 void insertPoint(vector<point>& pointList, int index, point newPoint);
+vector<point> cleanData(vector<point> pointList);
+void findLargestSquare(vector<point> pointList);
 
 int main() {
 	displayGraphics();
@@ -55,7 +64,7 @@ int main() {
 	bool has_mouse_Dragged = false;
 
 	drawInstructionText(points_Array_Size);	// draws the inscructions on the top of the screen for the first time, after this its only drawn when the screen is updated
-
+	
 	while (true) {
 		points_Array_Size = points.size(); // called at the top of the loop once instead of every single time i need this info
 
@@ -75,8 +84,7 @@ int main() {
 
 		}
 		if (down()) {// outputs a random square on the shape
-			findRandomSquare(points);
-			NULL;
+			findLargestSquare(points);
 		}
 		
 		if (has_mouse_Dragged) { // if updated
@@ -89,35 +97,78 @@ int main() {
 	return 0;
 }
 
-void drawPoints(vector<point> vectorOfPoints) // only called if the mouse is currently being dragged;
-{
-	int size = vectorOfPoints.size() - 1;
-	drawLine(vectorOfPoints[0].x, vectorOfPoints[0].y, vectorOfPoints[size].x, vectorOfPoints[size].y, 3); // connects the first and last point together to make a closed shape
 
-	for (int i = 0; i < size; i++) { // links every point from 0 to size via a line with a width of 3
-		drawLine(vectorOfPoints[i].x, vectorOfPoints[i].y, vectorOfPoints[i + 1].x, vectorOfPoints[i + 1].y, 3);
-		setColor(drawPoint(vectorOfPoints[i].x, vectorOfPoints[i].y), 255, 0, 0);// this part draws red dots over the top of the white line so i can see where the real points are in the vector
-	}
+//big important functions
+
+void findLargestSquare(vector<point> pointList)
+{
+	addFinalPoint(pointList);
+	pointList = cleanData(pointList);
+
+	int sizeOfPointsArr = size(pointList);
+	drawPoints(pointList);
+	drawInstructionText(sizeOfPointsArr);
 }
 
-void drawInstructionText(int size)
+void addPoint(vector<point> &pointList, int mouse_x, int mouse_y)
 {
-	gout << setPos(10, 10) << "drag your mouse to draw a shape, press up on the keyboard to reset points" << endg;
-	gout << setPos(10, 25) << "then press right on the keyboard to find the biggest square that can be formed from the points" << endg;
-	gout << setPos(10, 40) << "sizeOfArray : " << size << endg;
+    pointList.push_back(point{mouse_x, mouse_y});
+    if (pointList.size() > 1) {
+        addMidpoints(pointList, pointList[pointList.size() - 2], pointList[pointList.size() - 1]);
+    }
 }
 
-bool canPointBeUsed(int x, int y)
+void addMidpoints(vector<point>& pointList, point point1, point point2) {
+	float distance = DistanceBetweenTwoPoints(point1, point2);
+
+	if (distance < 2) { return; }// gets out of recursion
+
+	point middle = getMidPoint(point1, point2);
+
+	int it = findPoint(pointList, point2);
+	insertPoint(pointList,it, middle); // Insert before point2
+
+	addMidpoints(pointList, point1, middle);// "left" side 
+	addMidpoints(pointList, middle, point2);// "right" side
+}
+
+vector<point> cleanData(vector<point> pointList)
 {
-	if (x < 0 || y < 0) {// if the x or y values are negative do not use them
-		return false;
+	int pointListSize = size(pointList);
+	for (int i = 0; i < pointListSize; i++) {
+		for (int ii = 0; ii < pointListSize; ii++) {
+			if (i != ii &&(pointList[i].x == pointList[ii].x && pointList[i].y == pointList[ii].y )) {
+				pointList.erase(find(pointList.begin(), pointList.end(), pointList[i]));
+				pointListSize -= 1;
+			}
+		}
 	}
-	return true;
+	return pointList;
+}
+
+
+
+
+//basic getter functions
+int findPoint(vector<point> pointList, point target) {
+	for (int i = 0; i < pointList.size(); i++) {
+		if (pointList[i] == target) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+void insertPoint(vector<point>& pointList, int index, point newPoint) {
+	if (index < 0 || index > pointList.size()) {
+		return;
+	}
+	pointList.insert(pointList.begin() + index, newPoint);
 }
 
 float DistanceBetweenTwoPoints(point point1, point point2)
 {
-	return sqrt(pow(point2.x-point1.x,2) + pow(point2.y-point1.y,2));
+	return sqrt(pow(point2.x - point1.x, 2) + pow(point2.y - point1.y, 2));
 }
 
 float slopeOfLine(point point1, point point2)
@@ -133,12 +184,13 @@ point getMidPoint(point point1, point point2)
 	return point{ ((point1.x + point2.x) / 2), ((point1.y + point2.y) / 2) };
 }
 
-void addPoint(vector<point> &pointList, int mouse_x, int mouse_y)
+//other functions
+
+void drawInstructionText(int size)
 {
-    pointList.push_back(point{mouse_x, mouse_y});
-    if (pointList.size() > 1) {
-        addMidpoints(pointList, pointList[pointList.size() - 2], pointList[pointList.size() - 1]);
-    }
+	gout << setPos(10, 10) << "drag your mouse to draw a shape, press up on the keyboard to reset points" << endg;
+	gout << setPos(10, 25) << "then press right on the keyboard to find the biggest square that can be formed from the points" << endg;
+	gout << setPos(10, 40) << "sizeOfArray : " << size << endg;
 }
 
 void addFinalPoint(vector<point>& pointList)
@@ -146,42 +198,21 @@ void addFinalPoint(vector<point>& pointList)
 	addMidpoints(pointList, pointList[0], pointList[pointList.size() - 1]);
 }
 
-void addMidpoints(vector<point>& pointList, point point1, point point2) {
-	float distance = DistanceBetweenTwoPoints(point1, point2);
-
-	if (distance < 2) // gets out of recursion
-		return;
-
-	point middle = getMidPoint(point1, point2);
-
-	int it = findPoint(pointList, point2);
-	cout << it << endl;
-	insertPoint(pointList,it,middle); // Insert before point2
-
-	// Recursively add midpoints
-	addMidpoints(pointList, point1, middle);// left side of 
-	addMidpoints(pointList, middle, point2);// 
-}
-
-void insertPoint(vector<point>& pointList, int index, point newPoint) {
-	if (index < 0 || index > pointList.size()) {
-		return;
-	}
-	pointList.insert(pointList.begin() + index, newPoint);
-}
-
-int findPoint(const vector<point>& pointList, const point& target) {
-	for (int i = 0; i < pointList.size(); i++) {
-		if ((pointList[i].x  == target.x ) && (pointList[i].y == target.y)) { 
-			return i;
-		}
-	}
-	return -1;
-}
-
-square findRandomSquare(vector<point> pointlist) // todo
+void drawPoints(vector<point> vectorOfPoints) // only called if the mouse is currently being dragged;
 {
-	addFinalPoint(pointlist);
-	drawPoints(pointlist);
-	return square();
+	int size = vectorOfPoints.size() - 1;
+	drawLine(vectorOfPoints[0].x, vectorOfPoints[0].y, vectorOfPoints[size].x, vectorOfPoints[size].y, 3); // connects the first and last point together to make a closed shape
+
+	for (int i = 0; i < size; i++) { // links every point from 0 to size via a line with a width of 3
+		drawLine(vectorOfPoints[i].x, vectorOfPoints[i].y, vectorOfPoints[i + 1].x, vectorOfPoints[i + 1].y, 3);
+		setColor(drawPoint(vectorOfPoints[i].x, vectorOfPoints[i].y), 255, 0, 0);// this part draws red dots over the top of the white line so i can see where the real points are in the vector
+	}
+}
+
+bool canPointBeUsed(int x, int y)
+{
+	if (x < 0 || y < 0) {// if the x or y values are negative do not use them
+		return false;
+	}
+	return true;
 }
